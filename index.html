@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deccan — Demo Products</title>
+
+  <!-- Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <style>
+    /* Basic reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, Arial, sans-serif; background:#f5f5f6; color:#222; line-height:1.3; }
+
+    /* NAVBAR (Swiggy-style clean white) */
+    .navbar {
+      position: sticky; top: 0; z-index: 999;
+      background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 20px;
+    }
+    .nav-left { display:flex; align-items:center; gap:14px; }
+    .logo {
+      width:44px; height:44px; border-radius:8px; display:inline-block; overflow:hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .logo img { width:100%; height:100%; object-fit:cover; display:block; }
+
+    .location {
+      display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; color:#111;
+    }
+    .nav-center { flex:1; display:flex; justify-content:center; padding:0 16px; }
+    .search-box {
+      width:720px; max-width:100%; display:flex; gap:8px; align-items:center;
+      background:#f2f2f2; padding:8px 12px; border-radius:10px;
+      box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+    }
+    .search-box i { color:#666; font-size:18px; }
+    .search-input {
+      border:0; outline:0; background:transparent; font-size:15px; width:100%;
+    }
+
+    .nav-right { display:flex; gap:18px; align-items:center; }
+    .nav-btn { display:flex; gap:8px; align-items:center; cursor:pointer; color:#333; font-weight:600; }
+    .nav-btn i { font-size:18px; }
+
+    /* Page container */
+    .container { max-width:1200px; margin:22px auto; padding:0 18px 60px; }
+
+    /* Category Nav bar below header (small chips) */
+    .categories {
+      display:flex; gap:12px; overflow-x:auto; padding:12px 6px; margin-bottom:18px;
+    }
+    .cat-chip {
+      background:#fff; padding:8px 12px; border-radius:999px; box-shadow:0 1px 4px rgba(0,0,0,0.06);
+      cursor:pointer; white-space:nowrap; font-weight:700; color:#1a1a1a; border: 1px solid rgba(0,0,0,0.04);
+    }
+    .cat-chip.active { background: #fff7ed; border-color:#ffd6a5; color:#e05600; }
+
+    /* Section Title */
+    .section-title { font-size:22px; font-weight:800; margin:18px 0 12px; color:#0f172a; }
+
+    /* Grid */
+    .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:18px; }
+    @media (max-width:1000px){ .grid{ grid-template-columns: repeat(3, 1fr); } .search-box{ width:520px; } }
+    @media (max-width:700px){ .grid{ grid-template-columns: repeat(2, 1fr);} .search-box{ width:100%; } .nav-right{ display:none; } }
+
+    .card {
+      background:#fff; border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(12,12,12,0.04);
+      display:flex; flex-direction:column; align-items:center; gap:8px; transition:transform .15s ease, box-shadow .15s ease;
+      min-height:220px;
+    }
+    .card:hover{ transform:translateY(-6px); box-shadow:0 14px 32px rgba(12,12,12,0.08); }
+    .card img { width:120px; height:120px; object-fit:contain; border-radius:8px; background:linear-gradient(#fff,#f9f9f9); padding:8px; }
+    .card h4 { font-size:16px; font-weight:700; text-align:center; margin-top:4px; color:#111; }
+    .card .price { margin-top:auto; font-weight:800; color:#0f5132; font-size:15px; }
+
+    /* Search result hint */
+    .search-hint { color:#666; margin:6px 0 16px; font-size:14px; }
+
+    /* Footer small */
+    footer { text-align:center; padding:24px 8px; color:#666; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="logo" title="Deccan Demo">
+        <!-- generic leaf image from unsplash -->
+        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" alt="logo">
+      </div>
+
+      <div class="location">
+        <span>Thiruvannamalai</span>
+        <i class="ri-arrow-down-s-fill" style="color:#666"></i>
+      </div>
+    </div>
+
+    <div class="nav-center">
+      <div class="search-box" role="search" title="Search products">
+        <i class="ri-search-line"></i>
+        <input id="searchInput" class="search-input" placeholder="Search products — e.g. Urea, Hexaconazole, Zinc" />
+        <button id="clearSearch" title="Clear" style="border:0;background:transparent;cursor:pointer;display:none">
+          <i class="ri-close-line" style="color:#666;font-size:18px"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-btn"><i class="ri-gift-line"></i> Offers</div>
+      <div class="nav-btn"><i class="ri-question-line"></i> Help</div>
+      <div class="nav-btn"><i class="ri-user-line"></i> Sign In</div>
+      <div class="nav-btn"><i class="ri-shopping-bag-line"></i> Cart</div>
+    </div>
+  </div>
+
+  <!-- Page container -->
+  <div class="container">
+
+    <!-- Category chips -->
+    <div class="categories" id="categoryChips">
+      <div class="cat-chip active" data-target="fertilizers">Fertilizers</div>
+      <div class="cat-chip" data-target="micronutrients">Micronutrients</div>
+      <div class="cat-chip" data-target="fungicides">Fungicides</div>
+    </div>
+
+    <!-- Search hint -->
+    <div id="searchHint" class="search-hint">Showing all products. Type in search to filter instantly.</div>
+
+    <!-- Fertilizers Section -->
+    <section id="fertilizers">
+      <h2 class="section-title">Fertilizers</h2>
+      <div id="fertGrid" class="grid"></div>
+    </section>
+
+    <!-- Micronutrients Section -->
+    <section id="micronutrients" style="margin-top:28px">
+      <h2 class="section-title">Micronutrients</h2>
+      <div id="microGrid" class="grid"></div>
+    </section>
+
+    <!-- Fungicides Section -->
+    <section id="fungicides" style="margin-top:28px">
+      <h2 class="section-title">Fungicides</h2>
+      <div id="fungGrid" class="grid"></div>
+    </section>
+
+  </div>
+
+  <footer>Deccan Demo • Product images from Unsplash (CDN) • Demo site</footer>
+
+  <script>
+    /********* PRODUCT DATA (30 items) *********/
+    const fertilizers = [
+      { name: "Urea Fertilizer (46% N)", price: "₹620 / 50kg", img: "fertilizer1.jfif" },
+      { name: "DAP 18-46-0", price: "₹1250 / 50kg", img: "fertilizer2.jfif" },
+      { name: "Potash MOP (KCl)", price: "₹980 / 50kg", img: "fertilizer3.jfif" },
+      { name: "NPK 20-20-20", price: "₹780 / 50kg", img: "fertilizer4.jfif" },
+      { name: "Organic Manure (Compost)", price: "₹350 / 25kg", img: "fertilizer5.jfif" },
+      { name: "Vermi Compost", price: "₹260 / 25kg", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&q=80&auto=format&fit=crop" },
+      { name: "Soil Conditioner", price: "₹540 / 25kg", img: "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=600&q=80&auto=format&fit=crop" },
+      { name: "Gypsum Powder", price: "₹300 / 25kg", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" },
+      { name: "Zinc Sulphate (ZnSO4)", price: "₹430 / 25kg", img: "fertilizer1.jfif" }
+    ];
+
+    const micronutrients = [
+      { name: "Zinc EDTA (Chelated Zinc)", price: "₹550 / L", img: "micro1.jfif" },
+      { name: "Magnesium Sulphate (Epsom salt)", price: "₹320 / 1kg", img: "micro2.jfif" },
+      { name: "Ferrous Sulphate (FeSO4)", price: "₹300 / 1kg", img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80&auto=format&fit=crop" },
+      { name: "Copper EDTA", price: "₹650 / L", img: "micro3.jfif" },
+      { name: "Calcium Nitrate", price: "₹520 / 1kg", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" },
+      { name: "Boron 20%", price: "₹450 / L", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?crop=entropy&w=600&q=80&auto=format&fit=crop" },
+      { name: "Manganese Sulphate", price: "₹370 / 1kg", img: "micro4.jfif" },
+      { name: "Chelated Micromix", price: "₹600 / L", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80&auto=format&fit=crop" },
+      { name: "Sulphur 90%", price: "₹420 / 25kg", img: "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=600&q=80&auto=format&fit=crop" },
+      { name: "Plant Growth Booster (Micronutrient)", price: "₹700 / L", img: "micro5.jfif" }
+    ];
+
+    const fungicides = [
+      { name: "Hexaconazole (Systemic)", price: "₹850 / L", img: "F1.jfif" },
+      { name: "Mancozeb 75%", price: "₹620 / 1kg", img: "F2.jfif" },
+      { name: "Carbendazim 50%", price: "₹540 / 1kg", img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80&auto=format&fit=crop" },
+      { name: "Metalaxyl", price: "₹900 / L", img: "https://images.unsplash.com/photo-1482192505345-5655af888cc4?w=600&q=80&auto=format&fit=crop" },
+      { name: "Sulphur Fungicide", price: "₹300 / 1kg", img: "F3.jfif" },
+      { name: "Tricyclazole (Rice Blast control)", price: "₹1100 / L", img: "https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=600&q=80&auto=format&fit=crop" },
+      { name: "Azoxystrobin", price: "₹1250 / L", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" },
+      { name: "Copper Oxychloride", price: "₹780 / 1kg", img: "F4.jfif" },
+      { name: "Validamycin", price: "₹930 / L", img: "F5.jfif" },
+      { name: "Propiconazole", price: "₹1050 / L", img: "https://images.unsplash.com/photo-1482192596544-9b3d6d5b0e2e?crop=entropy&w=600&q=80&auto=format&fit=crop" }
+    ];
+
+    /********* RENDERING *********/
+    const fertGrid = document.getElementById('fertGrid');
+    const microGrid = document.getElementById('microGrid');
+    const fungGrid = document.getElementById('fungGrid');
+    const searchInput = document.getElementById('searchInput');
+    const searchHint = document.getElementById('searchHint');
+    const clearBtn = document.getElementById('clearSearch');
+    const chips = document.querySelectorAll('.cat-chip');
+
+    function createCard(product) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <img src="${product.img}" alt="${escapeHtml(product.name)}" loading="lazy" />
+        <h4>${escapeHtml(product.name)}</h4>
+        <div class="price">${escapeHtml(product.price)}</div>
+      `;
+      return div;
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"'`=\/]/g, function (s) {
+        return ({
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;','=':'&#61;'
+        })[s];
+      });
+    }
+
+    function renderAll() {
+      // clear
+      fertGrid.innerHTML = ''; microGrid.innerHTML = ''; fungGrid.innerHTML = '';
+      fertilizers.forEach(p => fertGrid.appendChild(createCard(p)));
+      micronutrients.forEach(p => microGrid.appendChild(createCard(p)));
+      fungicides.forEach(p => fungGrid.appendChild(createCard(p)));
+    }
+
+    // initial render
+    renderAll();
+
+    /********* SEARCH (instant filter) *********/
+    function filterProducts(query) {
+      const q = query.trim().toLowerCase();
+      // if empty, show hint and render all
+      if (!q) {
+        searchHint.textContent = 'Showing all products. Type in search to filter instantly.';
+        renderAll();
+        clearBtn.style.display = 'none';
+        return;
+      }
+      clearBtn.style.display = 'inline-block';
+      searchHint.textContent = `Search results for "${query}"`;
+
+      // filter arrays
+      const f = fertilizers.filter(p => p.name.toLowerCase().includes(q));
+      const m = micronutrients.filter(p => p.name.toLowerCase().includes(q));
+      const fn = fungicides.filter(p => p.name.toLowerCase().includes(q));
+
+      // render filtered
+      fertGrid.innerHTML = ''; microGrid.innerHTML = ''; fungGrid.innerHTML = '';
+
+      if (f.length) f.forEach(p => fertGrid.appendChild(createCard(p)));
+      if (m.length) m.forEach(p => microGrid.appendChild(createCard(p)));
+      if (fn.length) fn.forEach(p => fungGrid.appendChild(createCard(p)));
+
+      // if none match, show message in each section
+      if (!f.length) fertGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No fertilizers found for "${escapeHtml(query)}"</div>`;
+      if (!m.length) microGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No micronutrients found for "${escapeHtml(query)}"</div>`;
+      if (!fn.length) fungGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No fungicides found for "${escapeHtml(query)}"</div>`;
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      filterProducts(e.target.value);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      filterProducts('');
+    });
+
+    /********* CATEGORY CHIP CLICK -> SMOOTH SCROLL *********/
+    document.getElementById('categoryChips').addEventListener('click', (ev) => {
+      const chip = ev.target.closest('.cat-chip');
+      if (!chip) return;
+      document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      const target = chip.getAttribute('data-target');
+      const el = document.getElementById(target);
+      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+
+    /********* CLICK ON NAV LINKS (if any) - optional: map top nav to chips *********/
+    // (Optional) add keyboard shortcut: "/" focuses search
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '/') {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+
+    // Accessibility: if images fail, show placeholder color
+    // (Note: Unsplash images usually load fine; loading="lazy" used)
+  </script>
+</body>
+</html>
