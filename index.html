@@ -39,6 +39,11 @@
       font-weight: 700;
       margin-bottom: 12px;
       letter-spacing: 0.03em;
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+    .intro-step h1.is-ready {
+      opacity: 1;
     }
     .intro-step h1 span {
       display:inline-block;
@@ -598,7 +603,7 @@
       const titleEl = welcomeStep.querySelector('h1');
       const fullText = titleEl.textContent.trim();
       const words = fullText.split(' ');
-      const baseDelay = 5000 / Math.max(words.length, 1);
+      const baseDelay = 6000 / Math.max(words.length, 1);
       titleEl.textContent = '';
       words.forEach((word, idx) => {
         const span = document.createElement('span');
@@ -606,17 +611,18 @@
         span.textContent = word;
         titleEl.appendChild(span);
       });
+      requestAnimationFrame(() => titleEl.classList.add('is-ready'));
 
-      // welcome text plays Dolby-like animation via CSS for ~5s
+      // welcome text plays Dolby-like animation via CSS for ~6s
       setTimeout(() => {
         welcomeStep.classList.add('hidden');
         loaderStep.classList.remove('hidden');
-      }, 5000); // welcome message stays for at least 5 seconds
+      }, 6000); // welcome message stays for at least 6 seconds
 
       setTimeout(() => {
         overlay.classList.add('fade-out');
         appShell.classList.remove('hidden');
-      }, 8000); // loader shows for ~3 seconds after welcome
+      }, 9000); // loader shows for ~3 seconds after welcome
     });
 
     let fertilizers = [
