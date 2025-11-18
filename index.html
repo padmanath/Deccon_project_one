@@ -4,16 +4,106 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Deccan — Demo Products</title>
-
-  <!-- Icons CDN -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-
   <style>
-    /* Basic reset */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Inter, Arial, sans-serif; background:#f5f5f6; color:#222; line-height:1.3; }
+    body { font-family: Inter, Arial, sans-serif; background:#f5f5f6; color:#222; line-height:1.3; min-height:100vh;}
+    img { max-width: 100%; display:block; }
 
-    /* NAVBAR (Swiggy-style clean white) */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top,#0a402b,#02160d 65%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 2000;
+      transition: opacity .5s ease, visibility .5s ease;
+    }
+    .intro-overlay.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .intro-step {
+      text-align:center;
+      max-width: 520px;
+      padding: 24px 28px;
+    }
+    .intro-step.hidden { display:none; }
+    .intro-step h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+    }
+    .intro-step h1 span {
+      display:inline-block;
+      opacity:0;
+      transform: translateY(24px) scale(0.9);
+      filter: blur(10px);
+      animation: atmosWord 0.9s ease-out forwards;
+      animation-delay: var(--delay, 0s);
+      text-shadow: 0 18px 32px rgba(0,0,0,0.55);
+      margin-right: 0.35em;
+    }
+    .intro-step p {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.78);
+    }
+    .loader-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin: 0 auto 18px;
+      padding: 16px;
+    }
+    .loader-spinner {
+      width:56px;
+      height:56px;
+      border-radius:50%;
+      border:4px solid rgba(255,255,255,0.25);
+      border-top-color:#79f2a1;
+      margin: 0 auto 12px;
+      animation: spin 1.1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes atmosWord {
+      0% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.9);
+        filter: blur(16px);
+      }
+      45% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.07);
+        filter: blur(4px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+        text-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      }
+    }
+
+    .app-shell.hidden {
+      visibility: hidden;
+      opacity: 0;
+    }
+    .app-shell {
+      transition: opacity .4s ease;
+    }
+
     .navbar {
       position: sticky; top: 0; z-index: 999;
       background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
@@ -25,11 +115,8 @@
       width:44px; height:44px; border-radius:8px; display:inline-block; overflow:hidden;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
-    .logo img { width:100%; height:100%; object-fit:cover; display:block; }
-
-    .location {
-      display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; color:#111;
-    }
+    .logo img { width:100%; height:100%; object-fit:cover; }
+    .location { display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; color:#111; }
     .nav-center { flex:1; display:flex; justify-content:center; padding:0 16px; }
     .search-box {
       width:720px; max-width:100%; display:flex; gap:8px; align-items:center;
@@ -40,31 +127,80 @@
     .search-input {
       border:0; outline:0; background:transparent; font-size:15px; width:100%;
     }
-
     .nav-right { display:flex; gap:18px; align-items:center; }
     .nav-btn { display:flex; gap:8px; align-items:center; cursor:pointer; color:#333; font-weight:600; }
     .nav-btn i { font-size:18px; }
 
-    /* Page container */
     .container { max-width:1200px; margin:22px auto; padding:0 18px 60px; }
+    .container[data-stage="awaiting-selection"] .categories,
+    .container[data-stage="awaiting-selection"] .product-section,
+    .container[data-stage="awaiting-selection"] #searchHint {
+      display: none;
+    }
+    .hero {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 15px 40px rgba(15,57,38,0.08);
+      text-align: center;
+      margin-bottom: 26px;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      color: #0b3d25;
+      margin-bottom: 12px;
+    }
+    .hero p { color:#496152; font-size: 1rem; margin-bottom: 24px; }
+    .hero-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 18px;
+    }
+    .hero-card {
+      border: 1px solid rgba(15,57,38,0.1);
+      border-radius: 18px;
+      background: #f9fcfa;
+      padding: 24px 18px;
+      cursor: pointer;
+      transition: all .2s ease;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 6px;
+      font-weight: 700;
+      color: #0f5132;
+    }
+    .hero-card i {
+      font-size: 28px;
+      color: #0f5132;
+    }
+    .hero-card.active {
+      border-color: #49c46d;
+      background: #e9f9ee;
+      box-shadow: 0 12px 24px rgba(73,196,109,0.2);
+    }
 
-    /* Category Nav bar below header (small chips) */
     .categories {
       display:flex; gap:12px; overflow-x:auto; padding:12px 6px; margin-bottom:18px;
     }
     .cat-chip {
       background:#fff; padding:8px 12px; border-radius:999px; box-shadow:0 1px 4px rgba(0,0,0,0.06);
       cursor:pointer; white-space:nowrap; font-weight:700; color:#1a1a1a; border: 1px solid rgba(0,0,0,0.04);
+      transition: background .2s ease, color .2s ease, border .2s ease;
     }
     .cat-chip.active { background: #fff7ed; border-color:#ffd6a5; color:#e05600; }
 
-    /* Section Title */
-    .section-title { font-size:22px; font-weight:800; margin:18px 0 12px; color:#0f172a; }
+    .section-title { font-size:22px; font-weight:800; margin:18px 0 12px; color:#0f172a; display:flex; align-items:center; gap:8px; }
+    .section-title span { font-size: 14px; font-weight:600; color:#5f6c7b; }
 
-    /* Grid */
     .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:18px; }
     @media (max-width:1000px){ .grid{ grid-template-columns: repeat(3, 1fr); } .search-box{ width:520px; } }
-    @media (max-width:700px){ .grid{ grid-template-columns: repeat(2, 1fr);} .search-box{ width:100%; } .nav-right{ display:none; } }
+    @media (max-width:700px){
+      .grid{ grid-template-columns: repeat(2, 1fr);}
+      .search-box{ width:100%; }
+      .nav-right{ display:none; }
+      .hero-options { grid-template-columns: 1fr; }
+    }
 
     .card {
       background:#fff; border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(12,12,12,0.04);
@@ -76,97 +212,426 @@
     .card h4 { font-size:16px; font-weight:700; text-align:center; margin-top:4px; color:#111; }
     .card .price { margin-top:auto; font-weight:800; color:#0f5132; font-size:15px; }
 
-    /* Search result hint */
     .search-hint { color:#666; margin:6px 0 16px; font-size:14px; }
-
-    /* Footer small */
     footer { text-align:center; padding:24px 8px; color:#666; font-size:14px; }
+
+    .product-section { display:none; }
+    .product-section.active { display:block; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      max-width: 480px;
+      width: 90%;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      position: relative;
+    }
+    .modal h3 {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      cursor: pointer;
+      color: #444;
+    }
+    .modal-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-primary {
+      background: #0f5132;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(15,81,50,0.24);
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .quantity-field {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:16px;
+      gap:16px;
+      font-weight:600;
+    }
+    .quantity-field input {
+      flex:0 0 140px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #cbd5f5;
+      font-size:1rem;
+    }
+    .billing-list {
+      max-height: 220px;
+      overflow: auto;
+      margin-bottom: 12px;
+    }
+    .billing-item {
+      display:flex;
+      justify-content:space-between;
+      padding:8px 0;
+      border-bottom:1px solid #edf2f7;
+      font-weight:600;
+    }
+    .billing-total {
+      display:flex;
+      justify-content:space-between;
+      font-size:1.1rem;
+      font-weight:700;
+      margin-bottom:18px;
+    }
+    .qr-box {
+      display:none;
+      border:1px solid #e2e8f0;
+      border-radius:16px;
+      padding:12px;
+      text-align:center;
+      margin-top:12px;
+    }
+    .qr-box img {
+      width:140px;
+      margin:0 auto 8px;
+    }
+
+    .manage-menu {
+      margin-top: 40px;
+      background:#fff;
+      border-radius:20px;
+      padding:24px;
+      box-shadow:0 15px 30px rgba(15,57,38,0.08);
+    }
+    .manage-menu h3 {
+      font-size:1.4rem;
+      margin-bottom:14px;
+      color:#0b3d25;
+    }
+    .manage-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:18px;
+      margin-top:16px;
+    }
+    .manage-card {
+      border:1px solid #e2e8f0;
+      border-radius:16px;
+      padding:18px;
+    }
+    .manage-card h4 {
+      font-size:1.1rem;
+      margin-bottom:10px;
+      color:#0f5132;
+    }
+    .manage-card label {
+      font-size:0.9rem;
+      color:#475569;
+      font-weight:600;
+      display:block;
+      margin-bottom:4px;
+    }
+    .manage-card input,
+    .manage-card select {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #cbd5f5;
+      margin-bottom:12px;
+      font-size:0.95rem;
+    }
+    .manage-products-list {
+      max-height:260px;
+      overflow:auto;
+      border:1px solid #e2e8f0;
+      border-radius:12px;
+      padding:8px;
+    }
+    .manage-item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 8px;
+      border-bottom:1px solid #edf2f7;
+      gap:12px;
+    }
+    .manage-item:last-child { border-bottom:none; }
+    .manage-item button {
+      border:none;
+      background:#fee2e2;
+      color:#b91c1c;
+      border-radius:999px;
+      padding:6px 12px;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .manage-menu {
+      display:none;
+    }
+    .seller-mode .manage-menu {
+      display:block;
+    }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div class="nav-left">
-      <div class="logo" title="Deccan Demo">
-        <!-- generic leaf image from unsplash -->
-        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" alt="logo">
-      </div>
-
-      <div class="location">
-        <span>DECCAN GREEN BIO-TECH TRICHY</span>
-        <i  style="color:#666"></i>
-      </div>
+  <div id="introOverlay" class="intro-overlay">
+    <div id="welcomeStep" class="intro-step">
+      <h1>Welcome to the digital portal of Deccan Marketer</h1>
+      <p>Connecting farmers with trusted inputs from Deccan Green Bio-Tech.</p>
     </div>
-
-    <div class="nav-center">
-      <div class="search-box" role="search" title="Search products">
-        <i class="ri-search-line"></i>
-        <input id="searchInput" class="search-input" placeholder="Search products — e.g. Urea, Hexaconazole, Zinc" />
-        <button id="clearSearch" title="Clear" style="border:0;background:transparent;cursor:pointer;display:none">
-          <i class="ri-close-line" style="color:#666;font-size:18px"></i>
-        </button>
+    <div id="loaderStep" class="intro-step hidden">
+      <div class="loader-logo">
+        <img src="Logo.png" alt="Deccan logo placeholder">
       </div>
-    </div>
-
-    <div class="nav-right">
-      <div class="nav-btn"><i class="ri-gift-line"></i> Offers</div>
-      <div class="nav-btn"><i class="ri-question-line"></i> Help</div>
-      <div class="nav-btn"><i class="ri-user-line"></i> Sign In</div>
-      <div class="nav-btn"><i class="ri-shopping-bag-line"></i> Cart</div>
+      <div class="loader-spinner"></div>
+      <p>Preparing your agri catalog...</p>
     </div>
   </div>
 
-  <!-- Page container -->
-  <div class="container">
-
-    <!-- Category chips -->
-    <div class="categories" id="categoryChips">
-      <div class="cat-chip active" data-target="fertilizers">Fertilizers</div>
-      <div class="cat-chip" data-target="micronutrients">Micronutrients</div>
-      <div class="cat-chip" data-target="fungicides">Fungicides</div>
+  <div id="appShell" class="app-shell hidden">
+    <div class="navbar">
+      <div class="nav-left">
+        <div class="logo" title="Deccan Demo">
+          <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" alt="logo">
+        </div>
+        <div class="location">
+          <span>DECCAN GREEN BIO-TECH TRICHY</span>
+        </div>
+      </div>
+      <div class="nav-center">
+        <div class="search-box" role="search" title="Search products">
+          <i class="ri-search-line"></i>
+          <input id="searchInput" class="search-input" placeholder="Search products — e.g. Urea, Hexaconazole, Zinc" />
+          <button id="clearSearch" title="Clear" style="border:0;background:transparent;cursor:pointer;display:none">
+            <i class="ri-close-line" style="color:#666;font-size:18px"></i>
+          </button>
+        </div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-btn"><i class="ri-gift-line"></i> Offers</div>
+        <div class="nav-btn"><i class="ri-question-line"></i> Help</div>
+        <div class="nav-btn"><i class="ri-user-line"></i> Sign In</div>
+        <div class="nav-btn"><i class="ri-shopping-bag-line"></i> Cart</div>
+        <div class="nav-btn" id="manageNavBtn" title="Seller login"><i class="ri-lock-2-line"></i> Manage</div>
+      </div>
     </div>
 
-    <!-- Search hint -->
-    <div id="searchHint" class="search-hint">Showing all products. Type in search to filter instantly.</div>
+    <div class="container" data-stage="awaiting-selection">
+      <section class="hero">
+        <h1>Grow greener with Deccan</h1>
+        <p>Select the product family you need and explore curated inputs.</p>
+        <div class="hero-options" id="heroOptions">
+          <button class="hero-card active" data-category="fertilizers">
+            <i class="ri-plant-line"></i>
+            Fertilizers
+            <span style="font-size:13px;color:#5f6c7b;font-weight:500;">Balanced nutrition blends</span>
+          </button>
+          <button class="hero-card" data-category="micronutrients">
+            <i class="ri-flask-line"></i>
+            Micronutrients
+            <span style="font-size:13px;color:#5f6c7b;font-weight:500;">Chelated trace elements</span>
+          </button>
+          <button class="hero-card" data-category="fungicides">
+            <i class="ri-shield-check-line"></i>
+            Fungicides
+            <span style="font-size:13px;color:#5f6c7b;font-weight:500;">Advanced crop protection</span>
+          </button>
+        </div>
+      </section>
 
-    <!-- Fertilizers Section -->
-    <section id="fertilizers">
-      <h2 class="section-title">Fertilizers</h2>
-      <div id="fertGrid" class="grid"></div>
-    </section>
+      <div class="categories" id="categoryChips">
+        <div class="cat-chip active" data-target="fertilizers">Fertilizers</div>
+        <div class="cat-chip" data-target="micronutrients">Micronutrients</div>
+        <div class="cat-chip" data-target="fungicides">Fungicides</div>
+      </div>
 
-    <!-- Micronutrients Section -->
-    <section id="micronutrients" style="margin-top:28px">
-      <h2 class="section-title">Micronutrients</h2>
-      <div id="microGrid" class="grid"></div>
-    </section>
+      <div id="searchHint" class="search-hint">Pick a category to explore detailed products.</div>
 
-    <!-- Fungicides Section -->
-    <section id="fungicides" style="margin-top:28px">
-      <h2 class="section-title">Fungicides</h2>
-      <div id="fungGrid" class="grid"></div>
-    </section>
+      <section id="fertilizers" class="product-section active">
+        <h2 class="section-title">Fertilizers <span>Core nutrition</span></h2>
+        <div id="fertGrid" class="grid"></div>
+      </section>
 
+      <section id="micronutrients" class="product-section">
+        <h2 class="section-title">Micronutrients <span>Trace boosters</span></h2>
+        <div id="microGrid" class="grid"></div>
+      </section>
+
+      <section id="fungicides" class="product-section">
+        <h2 class="section-title">Fungicides <span>Crop defense</span></h2>
+        <div id="fungGrid" class="grid"></div>
+      </section>
+
+      <section class="manage-menu" id="manageMenu">
+        <h3>Manage Menu</h3>
+        <p style="color:#51605c;margin-bottom:16px;">Sellers can clear carts, add new listings, or remove existing ones.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+          <button class="btn btn-secondary" id="clearCartBtn">Clear Cart</button>
+        </div>
+        <div class="manage-grid">
+          <div class="manage-card">
+            <h4>Add product</h4>
+            <label for="manageCategorySelect">Category</label>
+            <select id="manageCategorySelect">
+              <option value="fertilizers">Fertilizers</option>
+              <option value="micronutrients">Micronutrients</option>
+              <option value="fungicides">Fungicides</option>
+            </select>
+            <label for="manageNameInput">Name</label>
+            <input id="manageNameInput" placeholder="Product name e.g. Organic Booster">
+            <label for="managePriceInput">Price info</label>
+            <input id="managePriceInput" placeholder="₹500 / kg">
+            <label for="manageImageInput">Image URL (optional)</label>
+            <input id="manageImageInput" placeholder="https://...">
+            <button class="btn btn-primary" id="manageAddBtn" style="width:100%;justify-content:center;">Add to catalog</button>
+          </div>
+          <div class="manage-card">
+            <h4>Remove product</h4>
+            <label for="manageListCategory">Category</label>
+            <select id="manageListCategory">
+              <option value="fertilizers">Fertilizers</option>
+              <option value="micronutrients">Micronutrients</option>
+              <option value="fungicides">Fungicides</option>
+            </select>
+            <div id="manageProductsList" class="manage-products-list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <footer>Deccan Demo • Product images from Unsplash (CDN) • Demo site</footer>
   </div>
 
-  <footer>Deccan Demo • Product images from Unsplash (CDN) • Demo site</footer>
+  <div id="productModal" class="modal-backdrop">
+    <div class="modal">
+      <button class="modal-close" data-close-modal>&times;</button>
+      <img id="modalImg" src="" alt="" style="width:140px;margin:0 auto 12px;display:block;">
+      <h3 id="modalTitle"></h3>
+      <p id="modalPrice" style="font-weight:700;color:#0f5132;"></p>
+      <p style="color:#48525f;margin-top:12px;">Premium agro input sourced from Deccan Green Bio-Tech inventory. Add it to your cart to proceed with billing instantly.</p>
+      <div class="quantity-field">
+        <label for="modalQuantity" style="color:#0b3d25;">Quantity</label>
+        <input type="number" id="modalQuantity" min="1" value="1">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="modalAddToCart">Add to cart</button>
+        <button class="btn btn-secondary" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="billingModal" class="modal-backdrop">
+    <div class="modal" style="max-width:560px;">
+      <button class="modal-close" data-close-modal>&times;</button>
+      <h3>Billing</h3>
+      <div class="billing-list" id="billingList"></div>
+      <div class="billing-total">
+        <span>Total</span>
+        <span id="billingTotal">₹0</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="payNowBtn"><i class="ri-qr-code-line" style="margin-right:6px;"></i>Pay now</button>
+        <button class="btn btn-secondary" id="printBillBtn"><i class="ri-printer-line" style="margin-right:6px;"></i>Print bill</button>
+        <button class="btn btn-secondary" id="billingClearBtn"><i class="ri-delete-bin-line" style="margin-right:6px;"></i>Clear cart</button>
+      </div>
+      <div class="qr-box" id="qrBox">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DeccanPay" alt="QR code placeholder">
+        <p>Scan to pay Deccan Green Bio-Tech</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="sellerLoginModal" class="modal-backdrop">
+    <div class="modal" style="max-width:420px;">
+      <button class="modal-close" data-close-modal>&times;</button>
+      <h3>Deccan Seller Login</h3>
+      <p style="color:#4b5563;margin-top:8px;margin-bottom:16px;">Enter your Deccan access PIN to open the manage menu. Buyers should not use this area.</p>
+      <label for="sellerPinInput" style="font-size:0.9rem;color:#4b5563;font-weight:600;display:block;margin-bottom:4px;">Access PIN</label>
+      <input id="sellerPinInput" type="password" placeholder="Enter seller PIN" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #cbd5f5;">
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="sellerLoginBtn">Login as seller</button>
+        <button class="btn btn-secondary" data-close-modal>Cancel</button>
+      </div>
+      <p style="color:#9b1c1c;font-size:0.85rem;margin-top:8px;display:none;" id="sellerErrorText">Invalid PIN. Please try again.</p>
+    </div>
+  </div>
 
   <script>
-    /********* PRODUCT DATA (30 items) *********/
-    const fertilizers = [
-      { name: "Urea Fertilizer (46% N)", price: "₹620 / 50kg", img: "fertilizer1.jfif" },
-      { name: "DAP 18-46-0", price: "₹1250 / 50kg", img: "fertilizer2.jfif" },
-      { name: "Potash MOP (KCl)", price: "₹980 / 50kg", img: "fertilizer3.jfif" },
-      { name: "NPK 20-20-20", price: "₹780 / 50kg", img: "fertilizer4.jfif" },
-      { name: "Organic Manure (Compost)", price: "₹350 / 25kg", img: "fertilizer5.jfif" },
-      { name: "Vermi Compost", price: "₹260 / 25kg", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&q=80&auto=format&fit=crop" },
-      { name: "Soil Conditioner", price: "₹540 / 25kg", img: "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=600&q=80&auto=format&fit=crop" },
-      { name: "Gypsum Powder", price: "₹300 / 25kg", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" },
-      { name: "Zinc Sulphate (ZnSO4)", price: "₹430 / 25kg", img: "fertilizer1.jfif" }
+    const overlay = document.getElementById('introOverlay');
+    const welcomeStep = document.getElementById('welcomeStep');
+    const loaderStep = document.getElementById('loaderStep');
+    const appShell = document.getElementById('appShell');
+
+    window.addEventListener('load', () => {
+      const titleEl = welcomeStep.querySelector('h1');
+      const fullText = titleEl.textContent.trim();
+      const words = fullText.split(' ');
+      const baseDelay = 5000 / Math.max(words.length, 1);
+      titleEl.textContent = '';
+      words.forEach((word, idx) => {
+        const span = document.createElement('span');
+        span.style.setProperty('--delay', `${idx * baseDelay}ms`);
+        span.textContent = word;
+        titleEl.appendChild(span);
+      });
+
+      // welcome text plays Dolby-like animation via CSS for ~5s
+      setTimeout(() => {
+        welcomeStep.classList.add('hidden');
+        loaderStep.classList.remove('hidden');
+      }, 5000); // welcome message stays for at least 5 seconds
+
+      setTimeout(() => {
+        overlay.classList.add('fade-out');
+        appShell.classList.remove('hidden');
+      }, 8000); // loader shows for ~3 seconds after welcome
+    });
+
+    let fertilizers = [
+      { name: "Urea Fertilizer (46% N)", price: "₹620 / kg", img: "fertilizer1.jfif" },
+      { name: "DAP 18-46-0", price: "₹1250 / kg", img: "fertilizer2.jfif" },
+      { name: "Potash MOP (KCl)", price: "₹980 / kg", img: "fertilizer3.jfif" },
+      { name: "NPK 20-20-20", price: "₹780 / kg", img: "fertilizer4.jfif" },
+      { name: "Organic Manure (Compost)", price: "₹350 / kg", img: "fertilizer5.jfif" },
+      { name: "Vermi Compost", price: "₹260 / kg", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&q=80&auto=format&fit=crop" },
+      { name: "Soil Conditioner", price: "₹540 / kg", img: "https://images.unsplash.com/photo-1472396961693-142e6e269027?w=600&q=80&auto=format&fit=crop" },
+      { name: "Gypsum Powder", price: "₹300 / kg", img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop" },
+      { name: "Zinc Sulphate (ZnSO4)", price: "₹430 / kg", img: "fertilizer1.jfif" }
     ];
 
-    const micronutrients = [
+    let micronutrients = [
       { name: "Zinc EDTA (Chelated Zinc)", price: "₹550 / L", img: "micro1.jfif" },
       { name: "Magnesium Sulphate (Epsom salt)", price: "₹320 / 1kg", img: "micro2.jfif" },
       { name: "Ferrous Sulphate (FeSO4)", price: "₹300 / 1kg", img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&q=80&auto=format&fit=crop" },
@@ -179,7 +644,7 @@
       { name: "Plant Growth Booster (Micronutrient)", price: "₹700 / L", img: "micro5.jfif" }
     ];
 
-    const fungicides = [
+    let fungicides = [
       { name: "Hexaconazole (Systemic)", price: "₹850 / L", img: "F1.jfif" },
       { name: "Mancozeb 75%", price: "₹620 / 1kg", img: "F2.jfif" },
       { name: "Carbendazim 50%", price: "₹540 / 1kg", img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80&auto=format&fit=crop" },
@@ -192,7 +657,6 @@
       { name: "Propiconazole", price: "₹1050 / L", img: "https://images.unsplash.com/photo-1482192596544-9b3d6d5b0e2e?crop=entropy&w=600&q=80&auto=format&fit=crop" }
     ];
 
-    /********* RENDERING *********/
     const fertGrid = document.getElementById('fertGrid');
     const microGrid = document.getElementById('microGrid');
     const fungGrid = document.getElementById('fungGrid');
@@ -200,17 +664,45 @@
     const searchHint = document.getElementById('searchHint');
     const clearBtn = document.getElementById('clearSearch');
     const chips = document.querySelectorAll('.cat-chip');
+    const heroCards = document.querySelectorAll('.hero-card');
+    const container = document.querySelector('.container');
+    const productModal = document.getElementById('productModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalPrice = document.getElementById('modalPrice');
+    const modalQuantity = document.getElementById('modalQuantity');
+    const modalAddBtn = document.getElementById('modalAddToCart');
+    const billingModal = document.getElementById('billingModal');
+    const billingList = document.getElementById('billingList');
+    const billingTotal = document.getElementById('billingTotal');
+    const payNowBtn = document.getElementById('payNowBtn');
+    const qrBox = document.getElementById('qrBox');
+    const printBillBtn = document.getElementById('printBillBtn');
+    const billingClearBtn = document.getElementById('billingClearBtn');
+    const manageClearBtn = document.getElementById('clearCartBtn');
+    const manageCategorySelect = document.getElementById('manageCategorySelect');
+    const manageNameInput = document.getElementById('manageNameInput');
+    const managePriceInput = document.getElementById('managePriceInput');
+    const manageImageInput = document.getElementById('manageImageInput');
+    const manageAddBtn = document.getElementById('manageAddBtn');
+    const manageListCategory = document.getElementById('manageListCategory');
+    const manageProductsList = document.getElementById('manageProductsList');
+    const manageNavBtn = document.getElementById('manageNavBtn');
+    const sellerLoginModal = document.getElementById('sellerLoginModal');
+    const sellerPinInput = document.getElementById('sellerPinInput');
+    const sellerLoginBtn = document.getElementById('sellerLoginBtn');
+    const sellerErrorText = document.getElementById('sellerErrorText');
 
-    function createCard(product) {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <img src="${product.img}" alt="${escapeHtml(product.name)}" loading="lazy" />
-        <h4>${escapeHtml(product.name)}</h4>
-        <div class="price">${escapeHtml(product.price)}</div>
-      `;
-      return div;
-    }
+    let activeCategory = '';
+    let hasRevealedProducts = false;
+    let selectedProduct = null;
+    const cartItems = [];
+
+    const categoryConfig = {
+      fertilizers: { data: fertilizers, grid: fertGrid, section: document.getElementById('fertilizers'), label: 'fertilizers' },
+      micronutrients: { data: micronutrients, grid: microGrid, section: document.getElementById('micronutrients'), label: 'micronutrients' },
+      fungicides: { data: fungicides, grid: fungGrid, section: document.getElementById('fungicides'), label: 'fungicides' }
+    };
 
     function escapeHtml(text) {
       return String(text).replace(/[&<>"'`=\/]/g, function (s) {
@@ -220,46 +712,84 @@
       });
     }
 
-    function renderAll() {
-      // clear
-      fertGrid.innerHTML = ''; microGrid.innerHTML = ''; fungGrid.innerHTML = '';
-      fertilizers.forEach(p => fertGrid.appendChild(createCard(p)));
-      micronutrients.forEach(p => microGrid.appendChild(createCard(p)));
-      fungicides.forEach(p => fungGrid.appendChild(createCard(p)));
+    function createCard(product) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <img src="${product.img}" alt="${escapeHtml(product.name)}" loading="lazy" />
+        <h4>${escapeHtml(product.name)}</h4>
+        <div class="price">${escapeHtml(product.price)}</div>
+      `;
+      div.addEventListener('click', () => openProductModal(product));
+      return div;
     }
 
-    // initial render
-    renderAll();
+    function revealProductStage() {
+      if (!hasRevealedProducts) {
+        container.setAttribute('data-stage', 'products');
+        hasRevealedProducts = true;
+      }
+    }
 
-    /********* SEARCH (instant filter) *********/
-    function filterProducts(query) {
+    function renderCategory(category, query = '') {
+      const config = categoryConfig[category];
+      if (!config) return;
+
       const q = query.trim().toLowerCase();
-      // if empty, show hint and render all
-      if (!q) {
-        searchHint.textContent = 'Showing all products. Type in search to filter instantly.';
-        renderAll();
-        clearBtn.style.display = 'none';
+      let items = config.data;
+      if (q) {
+        items = config.data.filter(p => p.name.toLowerCase().includes(q));
+        searchHint.textContent = `Showing ${config.label} results for "${query}"`;
+      } else {
+        searchHint.textContent = `Showing all ${config.label}. Type in search to filter instantly.`;
+      }
+
+      config.grid.innerHTML = '';
+
+      if (!items.length) {
+        config.grid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No ${config.label} found for "${escapeHtml(query)}"</div>`;
         return;
       }
-      clearBtn.style.display = 'inline-block';
-      searchHint.textContent = `Search results for "${query}"`;
 
-      // filter arrays
-      const f = fertilizers.filter(p => p.name.toLowerCase().includes(q));
-      const m = micronutrients.filter(p => p.name.toLowerCase().includes(q));
-      const fn = fungicides.filter(p => p.name.toLowerCase().includes(q));
+      items.forEach(p => config.grid.appendChild(createCard(p)));
+    }
 
-      // render filtered
-      fertGrid.innerHTML = ''; microGrid.innerHTML = ''; fungGrid.innerHTML = '';
+    function setActiveCategory(category, { scrollIntoView = false } = {}) {
+      if (!categoryConfig[category]) return;
+      activeCategory = category;
+      revealProductStage();
 
-      if (f.length) f.forEach(p => fertGrid.appendChild(createCard(p)));
-      if (m.length) m.forEach(p => microGrid.appendChild(createCard(p)));
-      if (fn.length) fn.forEach(p => fungGrid.appendChild(createCard(p)));
+      Object.values(categoryConfig).forEach(({ section }) => section.classList.remove('active'));
+      categoryConfig[category].section.classList.add('active');
 
-      // if none match, show message in each section
-      if (!f.length) fertGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No fertilizers found for "${escapeHtml(query)}"</div>`;
-      if (!m.length) microGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No micronutrients found for "${escapeHtml(query)}"</div>`;
-      if (!fn.length) fungGrid.innerHTML = `<div style="grid-column:1/-1;padding:12px;color:#666">No fungicides found for "${escapeHtml(query)}"</div>`;
+      chips.forEach(chip => chip.classList.toggle('active', chip.dataset.target === category));
+      heroCards.forEach(card => card.classList.toggle('active', card.dataset.category === category));
+
+      renderCategory(category, searchInput.value);
+
+      if (scrollIntoView) {
+        categoryConfig[category].section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => setActiveCategory(chip.dataset.target));
+    });
+
+    heroCards.forEach(card => {
+      card.addEventListener('click', () => setActiveCategory(card.dataset.category, { scrollIntoView: true }));
+    });
+
+    function filterProducts(query) {
+      const q = query.trim();
+      clearBtn.style.display = q ? 'inline-block' : 'none';
+
+      if (!activeCategory) {
+        searchHint.textContent = 'Pick a category to explore products before searching.';
+        return;
+      }
+
+      renderCategory(activeCategory, q);
     }
 
     searchInput.addEventListener('input', (e) => {
@@ -271,19 +801,12 @@
       filterProducts('');
     });
 
-    /********* CATEGORY CHIP CLICK -> SMOOTH SCROLL *********/
     document.getElementById('categoryChips').addEventListener('click', (ev) => {
       const chip = ev.target.closest('.cat-chip');
       if (!chip) return;
-      document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      const target = chip.getAttribute('data-target');
-      const el = document.getElementById(target);
-      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      setActiveCategory(chip.getAttribute('data-target'));
     });
 
-    /********* CLICK ON NAV LINKS (if any) - optional: map top nav to chips *********/
-    // (Optional) add keyboard shortcut: "/" focuses search
     window.addEventListener('keydown', (e) => {
       if (e.key === '/') {
         e.preventDefault();
@@ -291,8 +814,184 @@
       }
     });
 
-    // Accessibility: if images fail, show placeholder color
-    // (Note: Unsplash images usually load fine; loading="lazy" used)
+    function openProductModal(product) {
+      selectedProduct = product;
+      modalImg.src = product.img;
+      modalImg.alt = product.name;
+      modalTitle.textContent = product.name;
+      modalPrice.textContent = product.price;
+      modalQuantity.value = 1;
+      productModal.classList.add('open');
+    }
+
+    function closeModal(el) {
+      el.classList.remove('open');
+    }
+
+    function parsePriceToNumber(priceString) {
+      const numbers = priceString.replace(/[^\d.]/g, '');
+      return Number(numbers || 0);
+    }
+
+    function getCategoryArray(category) {
+      if (category === 'micronutrients') return micronutrients;
+      if (category === 'fungicides') return fungicides;
+      return fertilizers;
+    }
+
+    function updateBillingUI() {
+      billingList.innerHTML = '';
+      if (!cartItems.length) {
+        billingList.innerHTML = '<p style="color:#6b7280;">Cart empty. Add products to generate bill.</p>';
+      } else {
+        cartItems.forEach(item => {
+          const subtotal = item.unitPrice * item.quantity;
+          const row = document.createElement('div');
+          row.className = 'billing-item';
+          row.innerHTML = `<span>${escapeHtml(item.name)} <small style="color:#6b7280;">× ${item.quantity}</small></span><span>₹${subtotal.toLocaleString('en-IN')}</span>`;
+          billingList.appendChild(row);
+        });
+      }
+
+      const total = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      billingTotal.textContent = `₹${total.toLocaleString('en-IN')}`;
+    }
+
+    function addToCart(product, quantity) {
+      cartItems.push({
+        name: product.name,
+        unitPrice: parsePriceToNumber(product.price),
+        quantity
+      });
+      updateBillingUI();
+      closeModal(productModal);
+      billingModal.classList.add('open');
+    }
+
+    modalAddBtn.addEventListener('click', () => {
+      if (!selectedProduct) return;
+      const qty = Math.max(1, parseInt(modalQuantity.value, 10) || 1);
+      addToCart(selectedProduct, qty);
+    });
+
+    productModal.addEventListener('click', (e) => {
+      if (e.target === productModal || e.target.hasAttribute('data-close-modal')) {
+        closeModal(productModal);
+      }
+    });
+
+    billingModal.addEventListener('click', (e) => {
+      if (e.target === billingModal || e.target.hasAttribute('data-close-modal')) {
+        closeModal(billingModal);
+        qrBox.style.display = 'none';
+      }
+    });
+
+    payNowBtn.addEventListener('click', () => {
+      qrBox.style.display = qrBox.style.display === 'block' ? 'none' : 'block';
+    });
+
+    billingClearBtn.addEventListener('click', () => {
+      cartItems.length = 0;
+      qrBox.style.display = 'none';
+      updateBillingUI();
+    });
+
+    manageClearBtn.addEventListener('click', () => {
+      cartItems.length = 0;
+      qrBox.style.display = 'none';
+      updateBillingUI();
+    });
+
+    printBillBtn.addEventListener('click', () => {
+      window.print();
+    });
+
+    manageNavBtn.addEventListener('click', () => {
+      sellerErrorText.style.display = 'none';
+      sellerPinInput.value = '';
+      sellerLoginModal.classList.add('open');
+    });
+
+    sellerLoginBtn.addEventListener('click', () => {
+      const pin = sellerPinInput.value.trim();
+      const VALID_PIN = 'DECCAN123';
+      if (pin === VALID_PIN) {
+        document.body.classList.add('seller-mode');
+        sellerErrorText.style.display = 'none';
+        closeModal(sellerLoginModal);
+        document.getElementById('manageMenu').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        sellerErrorText.style.display = 'block';
+      }
+    });
+
+    sellerLoginModal.addEventListener('click', (e) => {
+      if (e.target === sellerLoginModal || e.target.hasAttribute('data-close-modal')) {
+        closeModal(sellerLoginModal);
+      }
+    });
+
+    function renderManageList(category = manageListCategory.value) {
+      const array = getCategoryArray(category);
+      if (!array.length) {
+        manageProductsList.innerHTML = '<p style="color:#6b7280;padding:12px;">No products in this category.</p>';
+        return;
+      }
+      manageProductsList.innerHTML = '';
+      array.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'manage-item';
+        row.innerHTML = `<span>${escapeHtml(item.name)}</span><button data-index="${index}">Remove</button>`;
+        manageProductsList.appendChild(row);
+      });
+    }
+
+    function handleAddProduct() {
+      const category = manageCategorySelect.value;
+      const name = manageNameInput.value.trim();
+      const price = managePriceInput.value.trim();
+      const img = manageImageInput.value.trim() || 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=600&q=80&auto=format&fit=crop';
+
+      if (!name || !price) {
+        alert('Please provide both name and price.');
+        return;
+      }
+
+      const arr = getCategoryArray(category);
+      arr.push({ name, price, img });
+      manageNameInput.value = '';
+      managePriceInput.value = '';
+      manageImageInput.value = '';
+
+      if (manageListCategory.value === category) {
+        renderManageList(category);
+      }
+      if (activeCategory === category) {
+        renderCategory(category, searchInput.value);
+      }
+    }
+
+    manageAddBtn.addEventListener('click', handleAddProduct);
+    manageListCategory.addEventListener('change', () => renderManageList());
+
+    manageProductsList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-index]');
+      if (!btn) return;
+      const index = Number(btn.getAttribute('data-index'));
+      const category = manageListCategory.value;
+      const arr = getCategoryArray(category);
+      arr.splice(index, 1);
+      renderManageList(category);
+      if (activeCategory === category) {
+        renderCategory(category, searchInput.value);
+      }
+    });
+
+    // grid renders occur when a customer makes a selection
+    renderManageList();
+    updateBillingUI();
   </script>
 </body>
 </html>
+
